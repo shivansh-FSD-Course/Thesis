@@ -1,0 +1,6 @@
+
+# temp sparse clone
+.tmp/
+
+# macOS
+.DS_Store
