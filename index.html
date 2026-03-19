@@ -1,32 +1,840 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LLM Study — Felt Understanding</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personality in the Machine — Thesis Results</title>
+<style>
+:root{--cream:#fef8f0;--paper:#fdf1e3;--card:#fffcf7;--terra:#d4693a;--coral:#e8865c;--peach:#f5a67a;--lt-peach:#fde9d6;--brown:#5c3220;--text:#3a2416;--muted:#9a7060;--border:#edd9c8;--sage:#72a672;--sky:#7aaabf;--gold:#d9aa42;--lav:#a68abf;--null:#b8aca6;--shadow:rgba(90,40,10,.09);--r:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.65;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(circle at 5% 20%,rgba(244,166,122,.07) 0%,transparent 35%),radial-gradient(circle at 95% 70%,rgba(114,166,114,.06) 0%,transparent 30%);pointer-events:none;z-index:0}
+
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;left:0;top:0;width:228px;height:100vh;background:var(--paper);border-right:2px solid var(--border);overflow-y:auto;z-index:100;display:flex;flex-direction:column}
+.sb-top{padding:20px 18px 16px;border-bottom:2px dashed var(--border);background:linear-gradient(160deg,#fff5ea,var(--paper))}
+.sb-title{font-family:Georgia,"Times New Roman",serif;font-size:14px;font-weight:700;color:var(--terra);line-height:1.35;margin-top:8px}
+.sb-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.nav-grp{padding:10px 0 4px}
+.nav-lbl{padding:0 16px 4px;font-size:9.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border-radius:0 20px 20px 0;margin-right:12px;transition:all .18s}
+.nav-item:hover{color:var(--terra);background:var(--lt-peach)}
+.nav-item.active{color:var(--terra);background:linear-gradient(90deg,var(--lt-peach),#fff8f2);font-weight:700;box-shadow:inset 3px 0 0 var(--terra)}
+.nav-ico{width:22px;flex-shrink:0}
+.nbadge{margin-left:auto;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px}
+.b-key{background:#fde9d6;color:var(--terra)}.b-null{background:#ede8e4;color:#8a7a72}.b-star{background:#fdf0d0;color:var(--gold)}.b-new{background:#e0f0e0;color:var(--sage)}
+
+/* ── MAIN ── */
+.main{margin-left:228px;padding:0 42px 100px;max-width:1060px;position:relative;z-index:1}
+
+/* ── HERO ── */
+.hero{padding:52px 0 0;margin-bottom:44px}
+.hero-inner{display:flex;align-items:center;gap:40px;margin-bottom:32px}
+.hero-text{flex:1}
+.hero-chip{display:inline-flex;align-items:center;gap:6px;background:var(--lt-peach);color:var(--terra);font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:5px 14px;border-radius:30px;border:1.5px solid var(--peach);margin-bottom:16px}
+.hero h1{font-family:Georgia,"Times New Roman",serif;font-size:38px;font-weight:700;line-height:1.18;color:var(--brown);margin-bottom:12px}
+.hero h1 em{color:var(--terra);font-style:italic}
+.hero-sub{font-size:14.5px;color:var(--muted);max-width:520px;margin-bottom:26px;line-height:1.7}
+.hero-pills{display:flex;flex-wrap:wrap;gap:9px}
+.stat-pill{background:var(--card);border:2px solid var(--border);border-radius:50px;padding:9px 18px;display:flex;align-items:center;gap:9px;box-shadow:0 3px 10px var(--shadow);transition:transform .2s}
+.stat-pill:hover{transform:translateY(-2px)}
+.stat-pill .n{font-family:Georgia,serif;font-size:21px;font-weight:700;color:var(--terra)}
+.stat-pill .lbl{font-size:11px;font-weight:700;color:var(--muted)}
+.hero-divider{height:3px;background:repeating-linear-gradient(90deg,var(--border) 0,var(--border) 8px,transparent 8px,transparent 14px);border-radius:2px;margin-top:44px}
+
+/* ── SECTIONS ── */
+.section{margin-bottom:60px;scroll-margin-top:24px}
+.sec-hdr{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.sec-icon{flex-shrink:0;margin-top:3px}
+.ext-tag{display:inline-block;padding:4px 13px;border-radius:30px;font-size:11.5px;font-weight:800;white-space:nowrap;flex-shrink:0;margin-top:3px}
+.t-terra{background:var(--terra);color:#fff}.t-null{background:var(--null);color:#fff}.t-sage{background:var(--sage);color:#fff}.t-sky{background:var(--sky);color:#fff}.t-gold{background:var(--gold);color:#fff}.t-lav{background:var(--lav);color:#fff}
+.sec-title{font-family:Georgia,"Times New Roman",serif;font-size:22px;font-weight:700;color:var(--brown);line-height:1.25}
+.sec-q{font-size:13px;color:var(--muted);font-style:italic;margin-top:4px}
+
+/* ── PLAIN ENGLISH BOX ── */
+.pe-box{background:linear-gradient(135deg,#fff9f4,#fef3ea);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start}
+.pe-box .pe-icon{font-size:22px;flex-shrink:0;line-height:1}
+.pe-box .pe-content{}
+.pe-box .pe-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:4px}
+.pe-box p{font-size:13.5px;color:var(--text);line-height:1.62}
+.pe-box strong{color:var(--terra)}
+
+/* ── CALLOUTS ── */
+.callout{border-radius:var(--r);padding:16px 20px;margin-bottom:16px;border-left:5px solid;position:relative;overflow:hidden}
+.callout::after{content:attr(data-icon);position:absolute;right:16px;top:12px;font-size:26px;opacity:.12}
+.c-peach{background:linear-gradient(135deg,#fff7f0,#fde9d6);border-color:var(--terra)}
+.c-green{background:linear-gradient(135deg,#f2faf2,#dff0df);border-color:var(--sage)}
+.c-blue{background:linear-gradient(135deg,#f0f7fc,#dcecf6);border-color:var(--sky)}
+.c-gold{background:linear-gradient(135deg,#fdfbf0,#fef0ce);border-color:var(--gold)}
+.c-red{background:linear-gradient(135deg,#fff0ec,#fcddd6);border-color:#d46050}
+.c-lav{background:linear-gradient(135deg,#f7f4fc,#ede4f4);border-color:var(--lav)}
+.callout-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;margin-bottom:5px}
+.c-peach .callout-lbl{color:var(--terra)}.c-green .callout-lbl{color:var(--sage)}.c-blue .callout-lbl{color:var(--sky)}.c-gold .callout-lbl{color:#a8800c}.c-red .callout-lbl{color:#b04030}.c-lav .callout-lbl{color:var(--lav)}
+.callout p{font-size:13.5px;color:var(--text);line-height:1.62}
+.callout strong{color:var(--terra)}.c-green strong{color:var(--sage)}.c-blue strong{color:var(--sky)}.c-gold strong{color:#a8800c}.c-red strong{color:#b04030}.c-lav strong{color:var(--lav)}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:0 3px 14px var(--shadow);margin-bottom:14px;transition:box-shadow .2s}
+.card:hover{box-shadow:0 5px 20px rgba(90,40,10,.13)}
+.card-title{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--brown);margin-bottom:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ── TABLES ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:linear-gradient(90deg,var(--lt-peach),#fff8f2);color:var(--brown);font-weight:800;padding:9px 12px;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
+.tbl td{padding:8px 12px;border-bottom:1px solid #f0e4d6;color:var(--text);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:#fdf5ed}
+.nv{font-weight:700;color:var(--terra);font-family:monospace;font-size:13px}.ng{color:var(--sage);font-weight:700}.nb{color:#c04030;font-weight:700}.nm{color:var(--muted)}
+
+/* ── ARC GRID ── */
+.arc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:16px}
+.arc-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:13px;box-shadow:0 3px 9px var(--shadow);transition:transform .2s,box-shadow .2s;cursor:default}
+.arc-card:hover{transform:translateY(-3px);box-shadow:0 6px 16px var(--shadow)}
+.arc-num{font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.arc-name{font-family:Georgia,serif;font-size:13px;color:var(--brown);margin:4px 0 7px;line-height:1.3}
+.arc-v{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px}
+.v-pos{background:#e0f2e0;color:var(--sage)}.v-null{background:#eae4e0;color:#7a6a62}.v-neg{background:#fde4da;color:#c05040}.v-key{background:#fef0cc;color:#a8800c}
+
+/* ── DIVIDER ── */
+.divider{border:none;margin:48px 0;position:relative;text-align:center}
+.divider::before{content:"";display:block;height:2px;background:repeating-linear-gradient(90deg,var(--border) 0,var(--border) 6px,transparent 6px,transparent 12px);border-radius:2px}
+.ddot{display:inline-block;position:relative;top:-12px;background:var(--cream);padding:0 12px;font-family:Georgia,serif;font-size:16px;color:var(--muted)}
+
+/* ── ANIMATIONS ── */
+@keyframes growBar{from{clip-path:inset(100% 0 0 0 round 3px)}to{clip-path:inset(0% 0 0 0 round 3px)}}
+@keyframes growBarH{from{clip-path:inset(0 100% 0 0 round 3px)}to{clip-path:inset(0 0% 0 0 round 3px)}}
+@keyframes drawLine{to{stroke-dashoffset:0}}
+@keyframes fadeDot{to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.abar{animation:growBar .65s ease-out both}
+.abarh{animation:growBarH .65s ease-out both}
+.section{animation:fadeUp .5s ease-out both}
+
+/* ── CHART HEIGHTS ── */
+.ch210{height:210px}.ch190{height:190px}.ch160{height:160px}.ch250{height:250px}.ch200{height:200px}.ch480{height:480px}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:32px 0 20px;color:var(--muted);font-size:12px;border-top:2px dashed var(--border)}
+
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--paper)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:var(--peach)}
+@media(max-width:860px){.sidebar{display:none}.main{margin-left:0;padding:0 20px 60px}.g2{grid-template-columns:1fr}.arc-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <div>
-        <h1>Conversation Study</h1>
-        <p class="muted">Felt understanding, emotional attunement, and personalization</p>
-      </div>
-      <div class="status">
-        <div id="progressText" class="muted">Step 1 of 6</div>
-        <div class="pill" id="pidPill">PID: —</div>
-      </div>
-    </header>
 
-    <main id="app"></main>
-
-    <footer class="footer muted">
-      <div>Do not share sensitive personal information (full name, address, phone, etc.).</div>
-      <div class="mutedSmall">This page runs fully in your browser. No server storage is enabled.</div>
-    </footer>
+<nav class="sidebar">
+  <div class="sb-top">
+    <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" style="width:120px;height:160px">
+  <style>.mascot-float{animation:mfloat 3.5s ease-in-out infinite}@keyframes mfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}</style>
+  <g class="mascot-float">
+    <rect x="30" y="18" width="60" height="64" rx="22" fill="#f5a67a"/>
+    <rect x="34" y="22" width="52" height="56" rx="18" fill="#f7b88a"/>
+    <circle cx="48" cy="44" r="10" fill="white" opacity="0.95"/>
+    <circle cx="72" cy="44" r="10" fill="white" opacity="0.95"/>
+    <circle cx="50" cy="45" r="5" fill="#5c3220"/>
+    <circle cx="74" cy="45" r="5" fill="#5c3220"/>
+    <circle cx="51.5" cy="43.5" r="2" fill="white"/>
+    <circle cx="75.5" cy="43.5" r="2" fill="white"/>
+    <path d="M 50 60 Q 60 68 70 60" fill="none" stroke="#5c3220" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="60" y1="18" x2="60" y2="6" stroke="#d4693a" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="60" cy="3" r="5" fill="#d4693a"/>
+    <circle cx="60" cy="3" r="2.5" fill="#f5a67a"/>
+    <rect x="35" y="86" width="50" height="52" rx="14" fill="#e8865c"/>
+    <rect x="38" y="90" width="44" height="44" rx="10" fill="#ec9570"/>
+    <circle cx="52" cy="106" r="5.5" fill="#fde9d6" opacity="0.8"/>
+    <circle cx="68" cy="106" r="5.5" fill="#fde9d6" opacity="0.8"/>
+    <circle cx="52" cy="106" r="2.5" fill="#d4693a" opacity="0.7"/>
+    <circle cx="68" cy="106" r="2.5" fill="#d4693a" opacity="0.7"/>
+    <rect x="45" y="118" width="30" height="10" rx="5" fill="#fde9d6" opacity="0.7"/>
+    <rect x="26" y="96" width="10" height="28" rx="5" fill="#e8865c"/>
+    <rect x="84" y="96" width="10" height="28" rx="5" fill="#e8865c"/>
+  </g>
+</svg>
+    <div class="sb-title">Personality in the Machine</div>
+    <div class="sb-sub">Master's Thesis · LUT · 2026</div>
   </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Overview</div>
+    <a class="nav-item active" href="#hero"><span class="nav-ico"><svg viewBox="0 0 40 40" width="36" heig…</span> Home</a>
+    <a class="nav-item" href="#arc"><span class="nav-ico"></span> Story Arc</a>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Extensions</div>
+    <a class="nav-item" href="#ext1"> Ext 1 · Methods <span class="nbadge b-key">key</span></a>
+    <a class="nav-item" href="#ext2"> Ext 2 · Steering <span class="nbadge b-null">null</span></a>
+    <a class="nav-item" href="#ext3"> Ext 3 · Geometry <span class="nbadge b-new">✓</span></a>
+    <a class="nav-item" href="#ext4"> Ext 4 · Dimensionality</a>
+    <a class="nav-item" href="#ext5"> Ext 5 · SAE Features</a>
+    <a class="nav-item" href="#ext6"> Ext 6 · SAE Steer <span class="nbadge b-null">null</span></a>
+    <a class="nav-item" href="#ext7"> Ext 7 · Decay <span class="nbadge b-key">key</span></a>
+    <a class="nav-item" href="#ext8a"> Ext 8a · Permutation</a>
+    <a class="nav-item" href="#ext9"> Ext 9 · Prompt <span class="nbadge b-star">★ 6×</span></a>
+    <a class="nav-item" href="#ext10"> Ext 10 · RLHF <span class="nbadge b-star">★</span></a>
+  </div>
+</nav>
 
-  <script src="app.js"></script>
+<main class="main">
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-chip">Master's Thesis · LUT University · 2026</div>
+      <h1>Personality in<br>the <em>Machine</em></h1>
+      <p class="hero-sub">Do AI models actually "understand" personality? This thesis digs inside four different language models to find out — where personalities are stored, whether they can be controlled, and what happens when the AI is trained to hide them.</p>
+      <div class="hero-pills">
+        <div class="stat-pill"><span class="n">4</span><span class="lbl">Models tested</span></div>
+        <div class="stat-pill"><span class="n">14</span><span class="lbl">Personality types</span></div>
+        <div class="stat-pill"><span class="n">10</span><span class="lbl">Experiments</span></div>
+        <div class="stat-pill"><span class="n">~6×</span><span class="lbl">Prompts beat injections</span></div>
+      </div>
+    </div>
+    <div style="flex-shrink:0"><svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" style="width:120px;height:160px">
+  <style>.mascot-float{animation:mfloat 3.5s ease-in-out infinite}@keyframes mfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}</style>
+  <g class="mascot-float">
+    <rect x="30" y="18" width="60" height="64" rx="22" fill="#f5a67a"/>
+    <rect x="34" y="22" width="52" height="56" rx="18" fill="#f7b88a"/>
+    <circle cx="48" cy="44" r="10" fill="white" opacity="0.95"/>
+    <circle cx="72" cy="44" r="10" fill="white" opacity="0.95"/>
+    <circle cx="50" cy="45" r="5" fill="#5c3220"/>
+    <circle cx="74" cy="45" r="5" fill="#5c3220"/>
+    <circle cx="51.5" cy="43.5" r="2" fill="white"/>
+    <circle cx="75.5" cy="43.5" r="2" fill="white"/>
+    <path d="M 50 60 Q 60 68 70 60" fill="none" stroke="#5c3220" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="60" y1="18" x2="60" y2="6" stroke="#d4693a" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="60" cy="3" r="5" fill="#d4693a"/>
+    <circle cx="60" cy="3" r="2.5" fill="#f5a67a"/>
+    <rect x="35" y="86" width="50" height="52" rx="14" fill="#e8865c"/>
+    <rect x="38" y="90" width="44" height="44" rx="10" fill="#ec9570"/>
+    <circle cx="52" cy="106" r="5.5" fill="#fde9d6" opacity="0.8"/>
+    <circle cx="68" cy="106" r="5.5" fill="#fde9d6" opacity="0.8"/>
+    <circle cx="52" cy="106" r="2.5" fill="#d4693a" opacity="0.7"/>
+    <circle cx="68" cy="106" r="2.5" fill="#d4693a" opacity="0.7"/>
+    <rect x="45" y="118" width="30" height="10" rx="5" fill="#fde9d6" opacity="0.7"/>
+    <rect x="26" y="96" width="10" height="28" rx="5" fill="#e8865c"/>
+    <rect x="84" y="96" width="10" height="28" rx="5" fill="#e8865c"/>
+  </g>
+</svg></div>
+  </div>
+  <div class="hero-divider"></div>
+</section>
+
+<!-- ARC -->
+<section class="section" id="arc">
+  <div class="sec-hdr">
+    <div>
+      <div class="sec-title">The Story Arc</div>
+      <div class="sec-q">Ten experiments that build toward one surprising conclusion</div>
+    </div>
+  </div>
+  <div class="arc-grid">
+    <div class="arc-card"><div class="arc-num">Ext 1</div><div class="arc-name">Method Showdown</div><div class="arc-v v-pos">Sparse wins</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 2</div><div class="arc-name">Activation Steering</div><div class="arc-v v-null">All flat</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 3</div><div class="arc-name">Cross-Arch Geometry</div><div class="arc-v v-pos">Universal</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 4</div><div class="arc-name">Dimensionality</div><div class="arc-v v-pos">Explains split</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 5</div><div class="arc-name">SAE Features</div><div class="arc-v v-pos">Superposition</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 6</div><div class="arc-name">SAE Steering</div><div class="arc-v v-null">Still flat</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 7</div><div class="arc-name">Signal Decay</div><div class="arc-v v-neg">Signal rotates</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 8a</div><div class="arc-name">Jaccard Baseline</div><div class="arc-v v-pos">Shared core</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 9</div><div class="arc-name">Prompt vs Injection</div><div class="arc-v v-key">★ 6× gap</div></div>
+    <div class="arc-card"><div class="arc-num">Ext 10</div><div class="arc-name">RLHF Suppression</div><div class="arc-v v-key">★ Punchline</div></div>
+  </div>
+  <div class="callout c-gold" data-icon="💡">
+    <div class="callout-lbl">The whole thesis in one sentence</div>
+    <p>AI models build <strong>concentrated internal representations</strong> of every personality type they know — including the ones they're trained to refuse — and these representations are created entirely by the safety training process, not the original pretraining.</p>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 1 -->
+<section class="section" id="ext1">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="14" cy="20" r="10" fill="#d4693a" opacity="0.35"/>
+  <circle cx="26" cy="20" r="10" fill="#7aaabf" opacity="0.35"/>
+  <circle cx="20" cy="12" r="10" fill="#72a672" opacity="0.35"/>
+  <circle cx="14" cy="20" r="10" fill="none" stroke="#d4693a" stroke-width="1.5"/>
+  <circle cx="26" cy="20" r="10" fill="none" stroke="#7aaabf" stroke-width="1.5"/>
+  <circle cx="20" cy="12" r="10" fill="none" stroke="#72a672" stroke-width="1.5"/>
+</svg></div>
+    <div><div class="ext-tag t-terra">Ext 1</div>
+      <div class="sec-title">Method Showdown</div>
+      <div class="sec-q">Three ways to find where personality is stored — do they agree?</div>
+    </div>
+  </div>
+  <div class="pe-box" data-icon="">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>Imagine trying to find where "happiness" is stored in the brain — you could look at brain scans, check neuron firing rates, or do surgery. We used three different methods to find where personality traits are stored in AI models. The question: do all three methods point to the same neurons? <strong>Mostly no — each finds different neurons. But one method (Sparse Probing) is much better at actually detecting the personality.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-peach" data-icon="">
+    <div class="callout-lbl">Key finding</div>
+    <p>Sparse Probing achieves F1 scores up to <strong>0.98</strong> on Llama and Qwen. Difference-in-Means (DiM) barely works on most models. Despite this huge performance gap, all three methods find almost completely <strong>different sets of neurons</strong> — they're like three blindfolded people touching different parts of the same elephant.</p>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">How well each method detects personality (F1 score, higher = better)</div><div class="ch210"><svg viewBox="0 0 500 210" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="156" fill="#fdf9f4" rx="6"/><line x1="46" y1="172" x2="484" y2="172" stroke="#edd9c8" stroke-width="1"/><text x="42" y="176" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="141" x2="484" y2="141" stroke="#edd9c8" stroke-width="1"/><text x="42" y="145" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.20</text><line x1="46" y1="110" x2="484" y2="110" stroke="#edd9c8" stroke-width="1"/><text x="42" y="114" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.40</text><line x1="46" y1="78" x2="484" y2="78" stroke="#edd9c8" stroke-width="1"/><text x="42" y="82" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.60</text><line x1="46" y1="47" x2="484" y2="47" stroke="#edd9c8" stroke-width="1"/><text x="42" y="51" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.80</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">1.00</text><text x="101" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="62.8" y="130.3" width="23.3" height="41.7" rx="3" fill="#b8907a" opacity="0.88" style="animation-delay:0.10s"><title>DiM: 0.267</title></rect><rect class="abar" x="89.1" y="73.6" width="23.3" height="98.4" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.15s"><title>NPSS: 0.631</title></rect><rect class="abar" x="115.4" y="26.3" width="23.3" height="145.7" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.20s"><title>Sparse: 0.934</title></rect><text x="210" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="172.3" y="121.9" width="23.3" height="50.1" rx="3" fill="#b8907a" opacity="0.88" style="animation-delay:0.25s"><title>DiM: 0.321</title></rect><rect class="abar" x="198.6" y="62.8" width="23.3" height="109.2" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.30s"><title>NPSS: 0.700</title></rect><rect class="abar" x="224.9" y="28.9" width="23.3" height="143.1" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.35s"><title>Sparse: 0.917</title></rect><text x="320" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="281.8" y="138.5" width="23.3" height="33.5" rx="3" fill="#b8907a" opacity="0.88" style="animation-delay:0.40s"><title>DiM: 0.215</title></rect><rect class="abar" x="308.1" y="101.5" width="23.3" height="70.5" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.45s"><title>NPSS: 0.452</title></rect><rect class="abar" x="334.4" y="51.1" width="23.3" height="120.9" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.50s"><title>Sparse: 0.775</title></rect><text x="429" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Phi-3</text><rect class="abar" x="391.3" y="167.6" width="23.3" height="4.4" rx="3" fill="#b8907a" opacity="0.88" style="animation-delay:0.55s"><title>DiM: 0.028</title></rect><rect class="abar" x="417.6" y="114.3" width="23.3" height="57.7" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.60s"><title>NPSS: 0.370</title></rect><rect class="abar" x="443.9" y="57.8" width="23.3" height="114.2" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.65s"><title>Sparse: 0.732</title></rect><rect x="46" y="195" width="10" height="10" rx="2" fill="#b8907a"/><text x="59" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">DiM</text><rect x="87" y="195" width="10" height="10" rx="2" fill="#7aaabf"/><text x="100" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">NPSS</text><rect x="133" y="195" width="10" height="10" rx="2" fill="#72a672"/><text x="146" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Sparse</text></svg></div></div>
+    <div class="card"><div class="card-title">How much two methods agree on which neurons matter (Jaccard overlap, k=500)</div><div class="ch210"><svg viewBox="0 0 500 210" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="156" fill="#fdf9f4" rx="6"/><line x1="46" y1="172" x2="484" y2="172" stroke="#edd9c8" stroke-width="1"/><text x="42" y="176" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="141" x2="484" y2="141" stroke="#edd9c8" stroke-width="1"/><text x="42" y="145" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.03</text><line x1="46" y1="110" x2="484" y2="110" stroke="#edd9c8" stroke-width="1"/><text x="42" y="114" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.06</text><line x1="46" y1="78" x2="484" y2="78" stroke="#edd9c8" stroke-width="1"/><text x="42" y="82" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.09</text><line x1="46" y1="47" x2="484" y2="47" stroke="#edd9c8" stroke-width="1"/><text x="42" y="51" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.12</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.15</text><text x="101" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="62.8" y="97.8" width="23.3" height="74.2" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.10s"><title>DiM↔Sparse: 0.071</title></rect><rect class="abar" x="89.1" y="83.0" width="23.3" height="89.0" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.15s"><title>DiM↔NPSS: 0.086</title></rect><rect class="abar" x="115.4" y="114.5" width="23.3" height="57.5" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.20s"><title>Sparse↔NPSS: 0.055</title></rect><text x="210" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="172.3" y="85.0" width="23.3" height="87.0" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.25s"><title>DiM↔Sparse: 0.084</title></rect><rect class="abar" x="198.6" y="89.6" width="23.3" height="82.4" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.30s"><title>DiM↔NPSS: 0.079</title></rect><rect class="abar" x="224.9" y="109.7" width="23.3" height="62.3" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.35s"><title>Sparse↔NPSS: 0.060</title></rect><text x="320" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="281.8" y="73.6" width="23.3" height="98.4" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.40s"><title>DiM↔Sparse: 0.095</title></rect><rect class="abar" x="308.1" y="75.9" width="23.3" height="96.1" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.45s"><title>DiM↔NPSS: 0.092</title></rect><rect class="abar" x="334.4" y="106.8" width="23.3" height="65.2" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.50s"><title>Sparse↔NPSS: 0.063</title></rect><text x="429" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Phi-3</text><rect class="abar" x="391.3" y="63.1" width="23.3" height="108.9" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.55s"><title>DiM↔Sparse: 0.105</title></rect><rect class="abar" x="417.6" y="74.2" width="23.3" height="97.8" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.60s"><title>DiM↔NPSS: 0.094</title></rect><rect class="abar" x="443.9" y="93.9" width="23.3" height="78.1" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.65s"><title>Sparse↔NPSS: 0.075</title></rect><rect x="46" y="195" width="10" height="10" rx="2" fill="#d4693a"/><text x="59" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">DiM↔Sparse</text><rect x="130" y="195" width="10" height="10" rx="2" fill="#7aaabf"/><text x="143" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">DiM↔NPSS</text><rect x="202" y="195" width="10" height="10" rx="2" fill="#a68abf"/><text x="215" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Sparse↔NPSS</text></svg></div></div>
+  </div>
+  <div class="card"><div class="card-title">Do methods agree on which personalities are hardest to detect? (Spearman ρ)</div>
+    <table class="tbl"><thead><tr><th>Model</th><th>DiM vs Sparse</th><th>DiM vs NPSS</th><th>Sparse vs NPSS</th><th>Architecture type</th></tr></thead>
+    <tbody>
+      <tr><td>Llama 3.1-8B</td><td class="nv">0.594</td><td class="nv">0.392</td><td class="nv">0.564</td><td class="ng">Low-dimensional — methods agree</td></tr>
+      <tr><td>Qwen 2.5-7B</td><td class="nv">0.578</td><td class="nv">0.397</td><td class="nv">0.539</td><td class="ng">Low-dimensional — methods agree</td></tr>
+      <tr><td>Gemma 2-9B</td><td class="nv">0.440</td><td class="nv">0.040</td><td class="nv">−0.005</td><td class="nb">High-dimensional — methods break down</td></tr>
+      <tr><td>Phi-3-mini</td><td class="nv">0.228</td><td class="nv">0.113</td><td class="nv">0.024</td><td class="nb">High-dimensional — methods break down</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 2 -->
+<section class="section" id="ext2">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 6 20 L 22 20" stroke="#b8aca6" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 18 14 L 24 20 L 18 26" stroke="#b8aca6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M 24 20 Q 34 20 34 10" stroke="#d4693a" stroke-width="2.5" stroke-linecap="round" fill="none" stroke-dasharray="3,2"/>
+  <circle cx="34" cy="8" r="3" fill="#d4693a" opacity="0.7"/>
+</svg></div>
+    <div><div class="ext-tag t-null">Ext 2</div>
+      <div class="sec-title">Activation Steering</div>
+      <div class="sec-q">Can we control a model's personality by injecting patterns we found?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>We found where personality is stored. Now the question: can we <em>change</em> the personality by injecting signals into those spots while the model is running? Think of it like trying to change someone's mood by directly stimulating specific neurons. <strong>It didn't work. Random injections performed just as well as our carefully targeted ones.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-red" data-icon="">
+    <div class="callout-lbl">Null result — but informative</div>
+    <p>All methods score within ±0.02 of baseline. Targeted vectors (DiM, Sparse, NPSS) are indistinguishable from <strong>random noise</strong>. This tells us the problem isn't bad targeting — it's something deeper about how the model processes injected signals. Ext 7 explains why. <em>(Being rerun with improved evaluation metrics.)</em></p>
+  </div>
+  <div class="card"><div class="card-title">Mean keyword score by steering method — everything clusters near baseline 0.097</div><div class="ch160"><svg viewBox="0 0 460 198" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="170" y="12" width="230" height="162" fill="#fdf9f4" rx="6"/><line x1="170" y1="12" x2="170" y2="174" stroke="#edd9c8" stroke-width="1"/><text x="170" y="187" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="216" y1="12" x2="216" y2="174" stroke="#edd9c8" stroke-width="1"/><text x="216" y="187" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.04</text><line x1="262" y1="12" x2="262" y2="174" stroke="#edd9c8" stroke-width="1"/><text x="262" y="187" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.08</text><line x1="308" y1="12" x2="308" y2="174" stroke="#edd9c8" stroke-width="1"/><text x="308" y="187" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.12</text><line x1="354" y1="12" x2="354" y2="174" stroke="#edd9c8" stroke-width="1"/><text x="354" y="187" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.16</text><line x1="400" y1="12" x2="400" y2="174" stroke="#edd9c8" stroke-width="1"/><text x="400" y="187" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.20</text><text x="164" y="32" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Baseline</text><rect class="abarh" x="170" y="19.3" width="111.5" height="17.8" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.10s"/><text x="287" y="32" font-size="11" font-family="system-ui,sans-serif" fill="#b8aca6" font-weight="700">0.097</text><text x="164" y="65" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">DiM</text><rect class="abarh" x="170" y="51.7" width="126.5" height="17.8" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.17s"/><text x="302" y="65" font-size="11" font-family="system-ui,sans-serif" fill="#d4693a" font-weight="700">0.110</text><text x="164" y="97" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Sparse</text><rect class="abarh" x="170" y="84.1" width="120.7" height="17.8" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.24s"/><text x="296" y="97" font-size="11" font-family="system-ui,sans-serif" fill="#72a672" font-weight="700">0.105</text><text x="164" y="129" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">NPSS</text><rect class="abarh" x="170" y="116.5" width="134.5" height="17.8" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.31s"/><text x="310" y="129" font-size="11" font-family="system-ui,sans-serif" fill="#7aaabf" font-weight="700">0.117</text><text x="164" y="162" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Random</text><rect class="abarh" x="170" y="148.9" width="112.7" height="17.8" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.38s"/><text x="288" y="162" font-size="11" font-family="system-ui,sans-serif" fill="#b8aca6" font-weight="700">0.098</text></svg></div></div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 3 -->
+<section class="section" id="ext3">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="10" cy="10" r="4" fill="#d4693a"/>
+  <circle cx="30" cy="10" r="4" fill="#e8865c"/>
+  <circle cx="20" cy="28" r="4" fill="#72a672"/>
+  <circle cx="10" cy="28" r="4" fill="#7aaabf"/>
+  <line x1="10" y1="10" x2="30" y2="10" stroke="#edd9c8" stroke-width="1.5"/>
+  <line x1="10" y1="10" x2="20" y2="28" stroke="#edd9c8" stroke-width="1.5"/>
+  <line x1="30" y1="10" x2="20" y2="28" stroke="#edd9c8" stroke-width="1.5"/>
+  <line x1="10" y1="28" x2="20" y2="28" stroke="#edd9c8" stroke-width="1.5"/>
+  <line x1="10" y1="10" x2="10" y2="28" stroke="#edd9c8" stroke-width="1.5"/>
+  <line x1="30" y1="10" x2="10" y2="28" stroke="#edd9c8" stroke-width="1.5" stroke-dasharray="3,2"/>
+</svg></div>
+    <div><div class="ext-tag t-sage">Ext 3</div>
+      <div class="sec-title">Cross-Architecture Geometry</div>
+      <div class="sec-q">Do completely different models organize personalities the same way?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>Llama, Qwen, Gemma, and Phi-3 were all trained separately, by different companies, with different architectures. Do they internally organize personality concepts (agreeableness, conscientiousness, etc.) in the same geometric arrangement? <strong>Yes — surprisingly so. All four models place personality concepts in almost the same relative positions.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-green" data-icon="">
+    <div class="callout-lbl">Positive finding</div>
+    <p>Cross-architecture similarity (Spearman ρ) ranges from <strong>0.39 to 0.84</strong>, all highly significant (p &lt; 0.0001). Personality types within the same category (Big Five / ethics / politics) are consistently more similar to each other than to types in other categories — across all four models independently trained.</p>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">How similar is each pair of models' personality geometry? (darker = more similar)</div><table style="border-collapse:collapse;font-size:12.5px"><tr><th></th><th style="background:var(--lt-peach);font-weight:800;color:var(--brown);padding:10px 14px">Llama</th><th style="background:var(--lt-peach);font-weight:800;color:var(--brown);padding:10px 14px">Qwen</th><th style="background:var(--lt-peach);font-weight:800;color:var(--brown);padding:10px 14px">Gemma</th><th style="background:var(--lt-peach);font-weight:800;color:var(--brown);padding:10px 14px">Phi</th></tr><tr><th>Llama</th><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">—</td><td style="background:#fde9d6;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.651</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.739</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.704</td></tr><tr><th>Qwen</th><td style="background:#fde9d6;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.651</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">—</td><td style="background:#fde9d6;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.608</td><td style="background:#f5b890;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.387</td></tr><tr><th>Gemma</th><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.739</td><td style="background:#fde9d6;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.608</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">—</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.722</td></tr><tr><th>Phi</th><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.704</td><td style="background:#f5b890;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.387</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">0.722</td><td style="background:#a8d4a8;font-weight:700;font-family:monospace;font-size:13px;padding:10px 14px;text-align:center;border:2px solid #fffcf7;border-radius:6px">—</td></tr></table></div>
+    <div class="card"><div class="card-title">Within-category vs between-category similarity — personalities cluster by type</div><div class="ch200"><svg viewBox="0 0 500 200" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="146" fill="#fdf9f4" rx="6"/><line x1="46" y1="162" x2="484" y2="162" stroke="#edd9c8" stroke-width="1"/><text x="42" y="166" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="133" x2="484" y2="133" stroke="#edd9c8" stroke-width="1"/><text x="42" y="137" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.02</text><line x1="46" y1="104" x2="484" y2="104" stroke="#edd9c8" stroke-width="1"/><text x="42" y="108" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.03</text><line x1="46" y1="74" x2="484" y2="74" stroke="#edd9c8" stroke-width="1"/><text x="42" y="78" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.05</text><line x1="46" y1="45" x2="484" y2="45" stroke="#edd9c8" stroke-width="1"/><text x="42" y="49" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.06</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.08</text><text x="101" y="174" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="71.2" y="148.0" width="28.0" height="14.0" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.00s"><title>Within-topic: 0.008</title></rect><rect class="abar" x="102.2" y="124.1" width="28.0" height="37.9" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.05s"><title>Between-topic: 0.021</title></rect><text x="210" y="174" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="180.8" y="87.8" width="28.0" height="74.2" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.10s"><title>Within-topic: 0.041</title></rect><rect class="abar" x="211.8" y="43.7" width="28.0" height="118.3" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.15s"><title>Between-topic: 0.065</title></rect><text x="320" y="174" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="290.2" y="155.1" width="28.0" height="6.9" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.20s"><title>Within-topic: 0.004</title></rect><rect class="abar" x="321.2" y="149.5" width="28.0" height="12.5" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.25s"><title>Between-topic: 0.007</title></rect><text x="429" y="174" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Phi-3</text><rect class="abar" x="399.8" y="155.0" width="28.0" height="7.0" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.30s"><title>Within-topic: 0.004</title></rect><rect class="abar" x="430.8" y="149.3" width="28.0" height="12.7" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.35s"><title>Between-topic: 0.007</title></rect><rect x="46" y="185" width="10" height="10" rx="2" fill="#72a672"/><text x="59" y="194" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Within-topic</text><rect x="142" y="185" width="10" height="10" rx="2" fill="#d4693a"/><text x="155" y="194" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Between-topic</text></svg></div></div>
+  </div>
+  <div class="card"><div class="card-title">Does a personality's geometric isolation predict how steerable it is?</div>
+    <table class="tbl"><thead><tr><th>Model</th><th>Spearman ρ</th><th>p-value</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Llama 3.1-8B</td><td class="nm">−0.202</td><td class="nm">0.488</td><td class="nm">No relationship</td></tr>
+      <tr><td>Qwen 2.5-7B</td><td class="nm">−0.323</td><td class="nm">0.259</td><td class="nm">No relationship</td></tr>
+      <tr><td>Gemma 2-9B</td><td class="nm">+0.220</td><td class="nm">0.449</td><td class="nm">No relationship</td></tr>
+      <tr><td>Phi-3-mini</td><td class="nm">−0.118</td><td class="nm">0.688</td><td class="nm">No relationship</td></tr>
+    </tbody></table>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">How isolated a personality's representation is tells you nothing about whether it can be steered.</p>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 4 -->
+<section class="section" id="ext4">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="22" width="14" height="14" rx="3" fill="#d4693a" opacity="0.8"/>
+  <text x="11" y="32" text-anchor="middle" font-size="8" font-family="system-ui,sans-serif" fill="white" font-weight="bold">2D</text>
+  <path d="M 22 8 L 36 8 L 36 22 L 22 22 Z" fill="#7aaabf" opacity="0.3" stroke="#7aaabf" stroke-width="1.5"/>
+  <path d="M 22 8 L 26 4 L 40 4 L 40 18 L 36 22" fill="none" stroke="#7aaabf" stroke-width="1.5"/>
+  <path d="M 36 8 L 40 4" fill="none" stroke="#7aaabf" stroke-width="1.5"/>
+  <text x="31" y="18" text-anchor="middle" font-size="8" font-family="system-ui,sans-serif" fill="#5c3220" font-weight="bold">3D</text>
+</svg></div>
+    <div><div class="ext-tag t-sky">Ext 4</div>
+      <div class="sec-title">Dimensionality Analysis</div>
+      <div class="sec-q">Why do some models store personality more compactly than others?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>Imagine packing information into boxes. Some models (Llama, Qwen) store each personality in a small, tightly packed box — easy to find and label. Others (Gemma, Phi-3) spread the same information across many more boxes. <strong>More boxes = harder to detect. But the number of boxes tells you nothing about whether you can change the personality.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-blue" data-icon="">
+    <div class="callout-lbl">Mechanistic explanation</div>
+    <p>Llama and Qwen have participation ratios of ~2–3 (low-dimensional). Gemma and Phi-3 have ratios of ~8–9 (high-dimensional). Higher dimensionality strongly predicts worse probe F1 (ρ = <strong>−0.70</strong>, p &lt; 0.0001) — but predicts nothing about steerability (ρ ≈ −0.07, not significant).</p>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">Participation Ratio — how many dimensions does each model spread personality across?</div><div class="ch190"><svg viewBox="0 0 500 190" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="136" fill="#fdf9f4" rx="6"/><line x1="46" y1="152" x2="484" y2="152" stroke="#edd9c8" stroke-width="1"/><text x="42" y="156" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="125" x2="484" y2="125" stroke="#edd9c8" stroke-width="1"/><text x="42" y="129" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">2.00</text><line x1="46" y1="98" x2="484" y2="98" stroke="#edd9c8" stroke-width="1"/><text x="42" y="102" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">4.00</text><line x1="46" y1="70" x2="484" y2="70" stroke="#edd9c8" stroke-width="1"/><text x="42" y="74" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">6.00</text><line x1="46" y1="43" x2="484" y2="43" stroke="#edd9c8" stroke-width="1"/><text x="42" y="47" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">8.00</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">10.00</text><text x="101" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="86.8" y="110.4" width="28.0" height="41.6" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.00s"><title>Participation Ratio: 3.060</title></rect><text x="210" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="196.2" y="121.9" width="28.0" height="30.1" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.05s"><title>Participation Ratio: 2.210</title></rect><text x="320" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="305.8" y="35.2" width="28.0" height="116.8" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.10s"><title>Participation Ratio: 8.590</title></rect><text x="429" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Phi-3</text><rect class="abar" x="415.2" y="47.4" width="28.0" height="104.6" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.15s"><title>Participation Ratio: 7.690</title></rect><rect x="46" y="175" width="10" height="10" rx="2" fill="#d4693a"/><text x="59" y="184" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Participation Ratio</text></svg></div></div>
+    <div class="card"><div class="card-title">How many dimensions are needed to capture 80% of the personality signal?</div><div class="ch190"><svg viewBox="0 0 500 190" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="136" fill="#fdf9f4" rx="6"/><line x1="46" y1="152" x2="484" y2="152" stroke="#edd9c8" stroke-width="1"/><text x="42" y="156" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="125" x2="484" y2="125" stroke="#edd9c8" stroke-width="1"/><text x="42" y="129" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">4.00</text><line x1="46" y1="98" x2="484" y2="98" stroke="#edd9c8" stroke-width="1"/><text x="42" y="102" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">8.00</text><line x1="46" y1="70" x2="484" y2="70" stroke="#edd9c8" stroke-width="1"/><text x="42" y="74" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">12.00</text><line x1="46" y1="43" x2="484" y2="43" stroke="#edd9c8" stroke-width="1"/><text x="42" y="47" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">16.00</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">20.00</text><text x="101" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="86.8" y="98.6" width="28.0" height="53.4" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.00s"><title>Dims for 80% var: 7.860</title></rect><text x="210" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="196.2" y="115.6" width="28.0" height="36.4" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.05s"><title>Dims for 80% var: 5.360</title></rect><text x="320" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="305.8" y="30.6" width="28.0" height="121.4" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.10s"><title>Dims for 80% var: 17.860</title></rect><text x="429" y="164" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Phi-3</text><rect class="abar" x="415.2" y="40.8" width="28.0" height="111.2" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.15s"><title>Dims for 80% var: 16.360</title></rect><rect x="46" y="175" width="10" height="10" rx="2" fill="#7aaabf"/><text x="59" y="184" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Dims for 80% var</text></svg></div></div>
+  </div>
+  <div class="card"><div class="card-title">Dimensionality vs performance correlations</div>
+    <table class="tbl"><thead><tr><th>Metric</th><th>Sparse F1 ρ</th><th>NPSS F1 ρ</th><th>DiM F1 ρ</th><th>Steering ρ</th></tr></thead>
+    <tbody>
+      <tr><td>Participation Ratio</td><td class="nb">−0.703***</td><td class="nb">−0.644***</td><td class="nb">−0.439***</td><td class="nm">−0.069 ns</td></tr>
+      <tr><td>Dims (90th pctile)</td><td class="nb">−0.798***</td><td class="nb">−0.635***</td><td class="nb">−0.454***</td><td class="nm">−0.127 ns</td></tr>
+      <tr><td>Irreducibility Score</td><td class="nb">−0.629***</td><td class="nb">−0.718***</td><td class="nb">−0.518***</td><td class="nm">−0.015 ns</td></tr>
+      <tr><td>Top-1 Variance</td><td class="ng">+0.694***</td><td class="ng">+0.737***</td><td class="ng">+0.475***</td><td class="nm">+0.071 ns</td></tr>
+    </tbody></table>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">*** p&lt;0.001 · ns = not significant. Dimensionality explains how well we can detect personality, but not whether we can control it.</p>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 5 -->
+<section class="section" id="ext5">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="14" width="16" height="16" rx="4" fill="#a68abf" opacity="0.7"/>
+  <rect x="20" y="4" width="16" height="16" rx="4" fill="#d4693a" opacity="0.5"/>
+  <rect x="20" y="20" width="16" height="16" rx="4" fill="#72a672" opacity="0.5"/>
+  <rect x="12" y="12" width="16" height="16" rx="4" fill="none" stroke="#5c3220" stroke-width="1.5" stroke-dasharray="3,2"/>
+</svg></div>
+    <div><div class="ext-tag t-lav">Ext 5</div>
+      <div class="sec-title">SAE Feature Decomposition</div>
+      <div class="sec-q">What do the individual "neurons" for personality actually look like?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>We used a technique called Sparse Autoencoder (SAE) to find individual "concept neurons" in each model. The goal: instead of looking at thousands of neurons at once, find the specific ones that light up for each personality. The most striking find: in Gemma, <strong>one single neuron activates for 6 different personalities at the same time</strong> — with mixed positive/negative signals.</p>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Gemma Feature #160 — one neuron, six personalities</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Blue bars = this neuron is <em>suppressed</em> for this personality · Orange = <em>activated</em></p>
+      <div id="f160_viz"></div>
+    </div>
+    <div class="card"><div class="card-title">Features shared across 3+ model architectures</div>
+      <table class="tbl"><thead><tr><th>Feature</th><th>Models</th><th>Personalities covered</th></tr></thead>
+      <tbody>
+        <tr><td class="nv">#24</td><td>Qwen, Gemma, Phi</td><td style="font-size:12px">agreeableness, conscientiousness, openness, extraversion, virtue-ethics, cultural-relativism, utilitarianism</td></tr>
+        <tr><td class="nv">#56</td><td>Qwen, Gemma, Phi</td><td style="font-size:12px">moral-nihilism, cultural-relativism, virtue-ethics, utilitarianism</td></tr>
+        <tr><td class="nv">#152</td><td>Qwen, Gemma, Phi</td><td style="font-size:12px">moral-nihilism, politically-liberal, virtue-ethics, utilitarianism, anti-immigration</td></tr>
+      </tbody></table>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">These cross-architecture features suggest LLMs converge on similar internal representations of social concepts, regardless of training differences.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 6 -->
+<section class="section" id="ext6">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 6 20 L 22 20" stroke="#b8aca6" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 18 14 L 24 20 L 18 26" stroke="#b8aca6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M 24 20 Q 34 20 34 10" stroke="#d4693a" stroke-width="2.5" stroke-linecap="round" fill="none" stroke-dasharray="3,2"/>
+  <circle cx="34" cy="8" r="3" fill="#d4693a" opacity="0.7"/>
+</svg></div>
+    <div><div class="ext-tag t-null">Ext 6</div>
+      <div class="sec-title">SAE-Refined Steering</div>
+      <div class="sec-q">Can more sophisticated steering approaches fix the failure from Ext 2?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>Ext 2's steering used simple averaged directions. Here we tried much more sophisticated approaches: steering using the specific SAE features we found, and steering along multi-dimensional subspaces instead of a single direction. <strong>Still didn't work. All approaches scored near baseline.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-red" data-icon="">
+    <div class="callout-lbl">Still null — all three escalations fail</div>
+    <p>Raw vectors → SAE-refined → multi-dimensional subspace. All fail identically. This rules out "wrong localization method" as the explanation. Something more fundamental is happening. See Ext 7.</p>
+  </div>
+  <div class="card"><div class="card-title">All steering approaches versus baseline — note how everything clusters together</div><div class="ch160"><svg viewBox="0 0 460 266" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="170" y="12" width="230" height="230" fill="#fdf9f4" rx="6"/><line x1="170" y1="12" x2="170" y2="242" stroke="#edd9c8" stroke-width="1"/><text x="170" y="255" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="216" y1="12" x2="216" y2="242" stroke="#edd9c8" stroke-width="1"/><text x="216" y="255" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.05</text><line x1="262" y1="12" x2="262" y2="242" stroke="#edd9c8" stroke-width="1"/><text x="262" y="255" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.10</text><line x1="308" y1="12" x2="308" y2="242" stroke="#edd9c8" stroke-width="1"/><text x="308" y="255" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.15</text><line x1="354" y1="12" x2="354" y2="242" stroke="#edd9c8" stroke-width="1"/><text x="354" y="255" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.20</text><line x1="400" y1="12" x2="400" y2="242" stroke="#edd9c8" stroke-width="1"/><text x="400" y="255" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.25</text><text x="164" y="32" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Baseline</text><rect class="abarh" x="170" y="19.4" width="92.0" height="18.1" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.10s"/><text x="267" y="32" font-size="11" font-family="system-ui,sans-serif" fill="#b8aca6" font-weight="700">0.100</text><text x="164" y="65" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">DiM c=8</text><rect class="abarh" x="170" y="52.2" width="150.9" height="18.1" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.17s"/><text x="326" y="65" font-size="11" font-family="system-ui,sans-serif" fill="#d4693a" font-weight="700">0.164</text><text x="164" y="98" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Multi-dim</text><rect class="abarh" x="170" y="85.1" width="41.4" height="18.1" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.24s"/><text x="216" y="98" font-size="11" font-family="system-ui,sans-serif" fill="#a68abf" font-weight="700">0.045</text><text x="164" y="131" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">SAE-refined</text><rect class="abarh" x="170" y="118.0" width="100.3" height="18.1" rx="3" fill="#d9aa42" opacity="0.88" style="animation-delay:0.31s"/><text x="275" y="131" font-size="11" font-family="system-ui,sans-serif" fill="#d9aa42" font-weight="700">0.109</text><text x="164" y="164" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Sparse c=8</text><rect class="abarh" x="170" y="150.8" width="115.9" height="18.1" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.38s"/><text x="291" y="164" font-size="11" font-family="system-ui,sans-serif" fill="#72a672" font-weight="700">0.126</text><text x="164" y="197" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">NPSS c=8</text><rect class="abarh" x="170" y="183.7" width="92.0" height="18.1" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.45s"/><text x="267" y="197" font-size="11" font-family="system-ui,sans-serif" fill="#7aaabf" font-weight="700">0.100</text><text x="164" y="230" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Random</text><rect class="abarh" x="170" y="216.5" width="76.4" height="18.1" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.52s"/><text x="251" y="230" font-size="11" font-family="system-ui,sans-serif" fill="#b8aca6" font-weight="700">0.083</text></svg></div></div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 7 -->
+<section class="section" id="ext7">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 4 20 Q 10 8 16 20 Q 22 32 28 24 Q 32 18 36 22" fill="none" stroke="#d4693a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 4 20 Q 10 16 16 20 Q 22 24 28 22 Q 32 21 36 22" fill="none" stroke="#d4693a" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <circle cx="4" cy="20" r="3" fill="#d4693a"/>
+  <circle cx="36" cy="22" r="3" fill="#b8aca6"/>
+</svg></div>
+    <div><div class="ext-tag t-terra">Ext 7</div>
+      <div class="sec-title">Perturbation Decay — Why Steering Fails</div>
+      <div class="sec-q">What actually happens to the injected signal as it travels through the network?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>Imagine shouting a message down a long hallway where each room transforms the sound before passing it on. By the time it reaches the end, the message is unrecognizable. We measured how quickly our injected "personality signal" gets rotated and absorbed by the model's layers. <strong>In Llama, the signal is already unrecognizable within just 2 layers. The model overwrites our injection before it can affect the output.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-peach" data-icon="">
+    <div class="callout-lbl">The mechanism found</div>
+    <p>The injected vector <strong>rotates rapidly</strong> as it propagates forward. Cosine similarity to the original drops from 1.0 to 0.43 within 2 layers in Llama, and below 0.5 within 3 layers in Qwen. The model's forward pass actively destroys the steering signal — this is why all six steering approaches failed. The red dashed line shows the 0.5 threshold.</p>
+  </div>
+  <div class="card"><div class="card-title">How much of the original injected signal survives each forward layer? (1.0 = perfect, 0 = completely rotated away)</div><div class="ch250"><svg viewBox="0 0 520 250" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="50" y="18" width="450" height="188" fill="#fdf9f4" rx="6"/><line x1="50" y1="206" x2="500" y2="206" stroke="#edd9c8" stroke-width="1"/><text x="46" y="210" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="50" y1="168" x2="500" y2="168" stroke="#edd9c8" stroke-width="1"/><text x="46" y="172" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.21</text><line x1="50" y1="131" x2="500" y2="131" stroke="#edd9c8" stroke-width="1"/><text x="46" y="135" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.42</text><line x1="50" y1="93" x2="500" y2="93" stroke="#edd9c8" stroke-width="1"/><text x="46" y="97" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.63</text><line x1="50" y1="56" x2="500" y2="56" stroke="#edd9c8" stroke-width="1"/><text x="46" y="60" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.84</text><line x1="50" y1="18" x2="500" y2="18" stroke="#edd9c8" stroke-width="1"/><text x="46" y="22" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">1.05</text><line x1="50" y1="116" x2="500" y2="116" stroke="#d4693a" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.6"/><text x="503" y="120" font-size="9" font-family="system-ui,sans-serif" fill="#d4693a" opacity="0.8">0.5</text><text x="50" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0</text><text x="106" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+1</text><text x="162" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+2</text><text x="219" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+3</text><text x="275" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+4</text><text x="331" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+5</text><text x="388" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+6</text><text x="444" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+7</text><text x="500" y="219" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">+8</text><path d="M50.0,27.0 L106.2,99.8 L162.5,128.5 L218.8,147.3 L275.0,167.9 L331.2,178.8 L387.5,182.7 L443.8,186.1 L500.0,188.5" fill="none" stroke="#d4693a" stroke-width="2.5" stroke-linecap="round" style="stroke-dasharray:501;stroke-dashoffset:501;animation:drawLine 1.2s ease-out 0.0s both"/><circle cx="50.0" cy="27.0" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.00s both"/><circle cx="106.2" cy="99.8" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.10s both"/><circle cx="162.5" cy="128.5" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.20s both"/><circle cx="218.8" cy="147.3" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.30s both"/><circle cx="275.0" cy="167.9" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.40s both"/><circle cx="331.2" cy="178.8" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.50s both"/><circle cx="387.5" cy="182.7" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.60s both"/><circle cx="443.8" cy="186.1" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.70s both"/><circle cx="500.0" cy="188.5" r="3.5" fill="#d4693a" style="opacity:0;animation:fadeDot 0.3s ease-out 0.80s both"/><path d="M50.0,27.0 L106.2,69.0 L162.5,98.8 L218.8,122.0 L275.0,153.0 L331.2,162.3 L387.5,168.4 L443.8,172.3 L500.0,176.5" fill="none" stroke="#e8865c" stroke-width="2.5" stroke-linecap="round" style="stroke-dasharray:485;stroke-dashoffset:485;animation:drawLine 1.2s ease-out 0.2s both"/><circle cx="50.0" cy="27.0" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.20s both"/><circle cx="106.2" cy="69.0" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.30s both"/><circle cx="162.5" cy="98.8" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.40s both"/><circle cx="218.8" cy="122.0" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.50s both"/><circle cx="275.0" cy="153.0" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.60s both"/><circle cx="331.2" cy="162.3" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.70s both"/><circle cx="387.5" cy="168.4" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.80s both"/><circle cx="443.8" cy="172.3" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 0.90s both"/><circle cx="500.0" cy="176.5" r="3.5" fill="#e8865c" style="opacity:0;animation:fadeDot 0.3s ease-out 1.00s both"/><path d="M50.0,27.0 L106.2,47.0 L162.5,65.6 L218.8,78.2 L275.0,98.8 L331.2,127.0 L387.5,138.0 L443.8,148.3 L500.0,157.7" fill="none" stroke="#7aaabf" stroke-width="2.5" stroke-linecap="round" style="stroke-dasharray:471;stroke-dashoffset:471;animation:drawLine 1.2s ease-out 0.4s both"/><circle cx="50.0" cy="27.0" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.40s both"/><circle cx="106.2" cy="47.0" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.50s both"/><circle cx="162.5" cy="65.6" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.60s both"/><circle cx="218.8" cy="78.2" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.70s both"/><circle cx="275.0" cy="98.8" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.80s both"/><circle cx="331.2" cy="127.0" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.90s both"/><circle cx="387.5" cy="138.0" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.00s both"/><circle cx="443.8" cy="148.3" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.10s both"/><circle cx="500.0" cy="157.7" r="3.5" fill="#7aaabf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.20s both"/><path d="M50.0,27.0 L106.2,55.6 L162.5,75.1 L218.8,85.0 L275.0,196.5 L331.2,99.3 L387.5,112.9 L443.8,123.6 L500.0,132.6" fill="none" stroke="#a68abf" stroke-width="2.5" stroke-linecap="round" style="stroke-dasharray:589;stroke-dashoffset:589;animation:drawLine 1.2s ease-out 0.6s both"/><circle cx="50.0" cy="27.0" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.60s both"/><circle cx="106.2" cy="55.6" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.70s both"/><circle cx="162.5" cy="75.1" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.80s both"/><circle cx="218.8" cy="85.0" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 0.90s both"/><circle cx="275.0" cy="196.5" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.00s both"/><circle cx="331.2" cy="99.3" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.10s both"/><circle cx="387.5" cy="112.9" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.20s both"/><circle cx="443.8" cy="123.6" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.30s both"/><circle cx="500.0" cy="132.6" r="3.5" fill="#a68abf" style="opacity:0;animation:fadeDot 0.3s ease-out 1.40s both"/><line x1="50" y1="239" x2="66" y2="239" stroke="#d4693a" stroke-width="2.5" stroke-linecap="round"/><text x="70" y="243" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Llama 3.1-8B</text><line x1="156" y1="239" x2="172" y2="239" stroke="#e8865c" stroke-width="2.5" stroke-linecap="round"/><text x="176" y="243" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Qwen 2.5-7B</text><line x1="257" y1="239" x2="273" y2="239" stroke="#7aaabf" stroke-width="2.5" stroke-linecap="round"/><text x="277" y="243" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Gemma 2-9B</text><line x1="351" y1="239" x2="367" y2="239" stroke="#a68abf" stroke-width="2.5" stroke-linecap="round"/><text x="371" y="243" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Phi-3-mini</text></svg></div></div>
+  <div class="g2">
+    <div class="card"><div class="card-title">How many layers until the signal is half-gone?</div>
+      <table class="tbl"><thead><tr><th>Model</th><th>Below 0.5 at layer</th><th>Speed</th></tr></thead>
+      <tbody>
+        <tr><td>Llama 3.1-8B</td><td class="nb">+2</td><td class="nb">Very fast</td></tr>
+        <tr><td>Qwen 2.5-7B</td><td class="nb">+3</td><td class="nb">Fast</td></tr>
+        <tr><td>Phi-3-mini</td><td class="nm">+4</td><td class="nm">Moderate</td></tr>
+        <tr><td>Gemma 2-9B</td><td class="ng">+8</td><td class="ng">Slow</td></tr>
+      </tbody></table>
+    </div>
+    <div class="callout c-peach" style="margin:0;align-self:center" data-icon="">
+      <div class="callout-lbl">Why this matters</div>
+      <p>The representations are real and detectable (Ext 1). But the model's own computation actively overwrites injected signals before they reach the output. This is why a simple <strong>text prompt</strong> works so much better — it flows naturally through the network instead of fighting against it.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 8a -->
+<section class="section" id="ext8a">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="14" cy="20" r="10" fill="#d4693a" opacity="0.35"/>
+  <circle cx="26" cy="20" r="10" fill="#7aaabf" opacity="0.35"/>
+  <circle cx="20" cy="12" r="10" fill="#72a672" opacity="0.35"/>
+  <circle cx="14" cy="20" r="10" fill="none" stroke="#d4693a" stroke-width="1.5"/>
+  <circle cx="26" cy="20" r="10" fill="none" stroke="#7aaabf" stroke-width="1.5"/>
+  <circle cx="20" cy="12" r="10" fill="none" stroke="#72a672" stroke-width="1.5"/>
+</svg></div>
+    <div><div class="ext-tag t-sky">Ext 8a</div>
+      <div class="sec-title">Jaccard Permutation Baseline</div>
+      <div class="sec-q">Are the methods really disagreeing, or do they share a common core?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>Ext 1 showed that the three methods find almost no overlapping neurons. But is that surprising? If neurons are assigned randomly, you'd also expect low overlap. We ran a permutation test to find out: is the observed overlap <em>more or less</em> than what random chance would give? <strong>Surprisingly — it's significantly MORE than chance. The methods actually share a common core of the most important neurons.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-green" data-icon="">
+    <div class="callout-lbl">Reframe: shared core, not pure disagreement</div>
+    <p>DiM vs Sparse at k=500 has z-score = <strong>7.28</strong> (observed 0.092 vs chance baseline 0.044). The methods aren't finding completely independent things — they agree on the most salient features, and only diverge on the surrounding lower-priority region. The overlap is small in absolute terms but much higher than chance.</p>
+  </div>
+  <div class="card"><div class="card-title">Z-scores vs permutation null (above zero = more overlap than chance)</div><div class="ch210"><svg viewBox="0 0 500 210" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="156" fill="#fdf9f4" rx="6"/><line x1="46" y1="172" x2="484" y2="172" stroke="#edd9c8" stroke-width="1"/><text x="42" y="176" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="141" x2="484" y2="141" stroke="#edd9c8" stroke-width="1"/><text x="42" y="145" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">1.60</text><line x1="46" y1="110" x2="484" y2="110" stroke="#edd9c8" stroke-width="1"/><text x="42" y="114" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">3.20</text><line x1="46" y1="78" x2="484" y2="78" stroke="#edd9c8" stroke-width="1"/><text x="42" y="82" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">4.80</text><line x1="46" y1="47" x2="484" y2="47" stroke="#edd9c8" stroke-width="1"/><text x="42" y="51" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">6.40</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">8.00</text><text x="101" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">k=50</text><rect class="abar" x="62.8" y="144.8" width="23.3" height="27.2" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.00s"><title>DiM↔Sparse: 1.394</title></rect><rect class="abar" x="89.1" y="146.8" width="23.3" height="25.2" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.05s"><title>DiM↔NPSS: 1.290</title></rect><rect class="abar" x="115.4" y="164.6" width="23.3" height="7.4" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.10s"><title>Sparse↔NPSS: 0.378</title></rect><text x="210" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">k=100</text><rect class="abar" x="172.3" y="128.6" width="23.3" height="43.4" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.15s"><title>DiM↔Sparse: 2.225</title></rect><rect class="abar" x="198.6" y="131.0" width="23.3" height="41.0" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.20s"><title>DiM↔NPSS: 2.102</title></rect><rect class="abar" x="224.9" y="161.9" width="23.3" height="10.1" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.25s"><title>Sparse↔NPSS: 0.520</title></rect><text x="320" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">k=200</text><rect class="abar" x="281.8" y="118.5" width="23.3" height="53.5" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.30s"><title>DiM↔Sparse: 2.742</title></rect><rect class="abar" x="308.1" y="121.3" width="23.3" height="50.7" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.35s"><title>DiM↔NPSS: 2.601</title></rect><rect class="abar" x="334.4" y="155.7" width="23.3" height="16.3" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.40s"><title>Sparse↔NPSS: 0.835</title></rect><text x="429" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">k=500</text><rect class="abar" x="391.3" y="29.9" width="23.3" height="142.1" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.45s"><title>DiM↔Sparse: 7.285</title></rect><rect class="abar" x="417.6" y="147.9" width="23.3" height="24.1" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.50s"><title>DiM↔NPSS: 1.235</title></rect><rect class="abar" x="443.9" y="105.5" width="23.3" height="66.5" rx="3" fill="#a68abf" opacity="0.88" style="animation-delay:0.55s"><title>Sparse↔NPSS: 3.409</title></rect><rect x="46" y="195" width="10" height="10" rx="2" fill="#d4693a"/><text x="59" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">DiM↔Sparse</text><rect x="130" y="195" width="10" height="10" rx="2" fill="#7aaabf"/><text x="143" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">DiM↔NPSS</text><rect x="202" y="195" width="10" height="10" rx="2" fill="#a68abf"/><text x="215" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Sparse↔NPSS</text></svg></div></div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 9 -->
+<section class="section" id="ext9">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="6" width="22" height="16" rx="5" fill="#72a672" opacity="0.85"/>
+  <path d="M 10 22 L 8 28 L 16 22" fill="#72a672" opacity="0.85"/>
+  <line x1="8" y1="12" x2="22" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="8" y1="16" x2="18" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <rect x="18" y="18" width="18" height="14" rx="4" fill="#b8aca6" opacity="0.5"/>
+  <path d="M 30 32 L 32 36 L 24 32" fill="#b8aca6" opacity="0.5"/>
+  <text x="27" y="28" text-anchor="middle" font-size="9" fill="white" font-family="system-ui,sans-serif">—</text>
+</svg></div>
+    <div><div class="ext-tag t-gold">Ext 9 — Key Result</div>
+      <div class="sec-title">Prompt vs Activation Steering</div>
+      <div class="sec-q">Can we just... tell the model its personality in a text prompt?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>After six experiments of failing to control personality by injecting signals, we tried the simplest possible approach: just adding "You are an agreeable person who values harmony" to the model's instructions. <strong>It worked 6× better than everything else we tried.</strong> And combining it with activation steering didn't help at all — the text prompt was doing all the work.</p>
+    </div>
+  </div>
+  <div class="callout c-gold" data-icon="">
+    <div class="callout-lbl">The key finding of the thesis</div>
+    <p>Prompt-only: <strong>0.575</strong>. Activation-only: <strong>0.096</strong> (= baseline 0.097). Combined: 0.580 — activation adds nothing even with a head start. The output gate responds to context (text prompts) but not to vector injection. The representations are real and readable, but a separate circuit controls what gets expressed.</p>
+  </div>
+  <div class="card"><div class="card-title">The four conditions — activation steering vs prompt steering</div><div class="ch160"><svg viewBox="0 0 460 160" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="170" y="12" width="230" height="124" fill="#fdf9f4" rx="6"/><line x1="170" y1="12" x2="170" y2="136" stroke="#edd9c8" stroke-width="1"/><text x="170" y="149" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="216" y1="12" x2="216" y2="136" stroke="#edd9c8" stroke-width="1"/><text x="216" y="149" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.14</text><line x1="262" y1="12" x2="262" y2="136" stroke="#edd9c8" stroke-width="1"/><text x="262" y="149" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.28</text><line x1="308" y1="12" x2="308" y2="136" stroke="#edd9c8" stroke-width="1"/><text x="308" y="149" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.42</text><line x1="354" y1="12" x2="354" y2="136" stroke="#edd9c8" stroke-width="1"/><text x="354" y="149" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.56</text><line x1="400" y1="12" x2="400" y2="136" stroke="#edd9c8" stroke-width="1"/><text x="400" y="149" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.70</text><text x="164" y="32" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Baseline</text><rect class="abarh" x="170" y="19.0" width="31.9" height="17.1" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.10s"/><text x="207" y="32" font-size="11" font-family="system-ui,sans-serif" fill="#b8aca6" font-weight="700">0.097</text><text x="164" y="62" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Activation Only</text><rect class="abarh" x="170" y="50.0" width="31.5" height="17.1" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.17s"/><text x="207" y="62" font-size="11" font-family="system-ui,sans-serif" fill="#b8aca6" font-weight="700">0.096</text><text x="164" y="94" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Prompt Only</text><rect class="abarh" x="170" y="81.0" width="188.9" height="17.1" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.24s"/><text x="364" y="94" font-size="11" font-family="system-ui,sans-serif" fill="#72a672" font-weight="700">0.575</text><text x="164" y="124" text-anchor="end" font-size="11" font-family="system-ui,sans-serif" fill="#3a2416">Combined (Prompt+Act)</text><rect class="abarh" x="170" y="112.0" width="190.6" height="17.1" rx="3" fill="#d9aa42" opacity="0.88" style="animation-delay:0.31s"/><text x="366" y="124" font-size="11" font-family="system-ui,sans-serif" fill="#d9aa42" font-weight="700">0.580</text></svg></div></div>
+  <div class="g2">
+    <div class="card"><div class="card-title">Activation vs prompt by model</div><div class="ch210"><svg viewBox="0 0 500 210" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="438" height="156" fill="#fdf9f4" rx="6"/><line x1="46" y1="172" x2="484" y2="172" stroke="#edd9c8" stroke-width="1"/><text x="42" y="176" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="141" x2="484" y2="141" stroke="#edd9c8" stroke-width="1"/><text x="42" y="145" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.15</text><line x1="46" y1="110" x2="484" y2="110" stroke="#edd9c8" stroke-width="1"/><text x="42" y="114" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.30</text><line x1="46" y1="78" x2="484" y2="78" stroke="#edd9c8" stroke-width="1"/><text x="42" y="82" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.45</text><line x1="46" y1="47" x2="484" y2="47" stroke="#edd9c8" stroke-width="1"/><text x="42" y="51" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.60</text><line x1="46" y1="16" x2="484" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.75</text><text x="101" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="71.2" y="151.2" width="28.0" height="20.8" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.00s"><title>Activation Only: 0.100</title></rect><rect class="abar" x="102.2" y="35.1" width="28.0" height="136.9" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.05s"><title>Prompt Only: 0.658</title></rect><text x="210" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="180.8" y="147.5" width="28.0" height="24.5" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.10s"><title>Activation Only: 0.118</title></rect><rect class="abar" x="211.8" y="39.9" width="28.0" height="132.1" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.15s"><title>Prompt Only: 0.635</title></rect><text x="320" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="290.2" y="153.5" width="28.0" height="18.5" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.20s"><title>Activation Only: 0.089</title></rect><rect class="abar" x="321.2" y="58.2" width="28.0" height="113.8" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.25s"><title>Prompt Only: 0.547</title></rect><text x="429" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Phi-3</text><rect class="abar" x="399.8" y="155.8" width="28.0" height="16.2" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.30s"><title>Activation Only: 0.078</title></rect><rect class="abar" x="430.8" y="75.3" width="28.0" height="96.7" rx="3" fill="#72a672" opacity="0.88" style="animation-delay:0.35s"><title>Prompt Only: 0.465</title></rect><rect x="46" y="195" width="10" height="10" rx="2" fill="#b8aca6"/><text x="59" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Activation Only</text><rect x="161" y="195" width="10" height="10" rx="2" fill="#72a672"/><text x="174" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Prompt Only</text></svg></div></div>
+    <div class="card"><div class="card-title">Per-personality steerability with prompts — sorted best to worst</div>
+      <div id="e9_bars" style="padding-top:4px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">utilitarianism</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#72a672;animation-delay:0.05s" data-w="95.0"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#72a672">0.950</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">virtue-ethics</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#72a672;animation-delay:0.09s" data-w="91.1"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#72a672">0.911</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">deontology</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.13s" data-w="76.7"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.767</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">neuroticism</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.17s" data-w="62.9"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.629</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">cultural-relativism</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.21s" data-w="62.5"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.625</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">politically-conservative</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.25s" data-w="60.0"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.600</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">politically-liberal</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.29s" data-w="60.0"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.600</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">agreeableness</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.33s" data-w="56.7"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.567</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">anti-immigration</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.37s" data-w="51.7"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.517</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">extraversion</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.41s" data-w="51.7"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.517</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">openness</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d9aa42;animation-delay:0.45s" data-w="50.5"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d9aa42">0.505</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">conscientiousness</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#e8865c;animation-delay:0.49s" data-w="46.0"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#e8865c">0.460</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">moral-nihilism</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#e8865c;animation-delay:0.53s" data-w="30.0"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#e8865c">0.300</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+  <div style="width:190px;font-size:12.5px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">anti-LGBTQ-rights</div>
+  <div style="flex:1;height:18px;background:#f2e8e0;border-radius:20px;overflow:hidden"><div class="abarh" style="height:100%;border-radius:20px;background:#d4693a;animation-delay:0.57s" data-w="10.0"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;text-align:right;color:#d4693a">0.100</div>
+</div></div>
+    </div>
+  </div>
+  <div class="callout c-peach" data-icon="">
+    <div class="callout-lbl">Why some personalities are harder to prompt-steer than others</div>
+    <p>Ethics personalities (utilitarianism 0.950, virtue-ethics 0.911) are easily prompted. Anti-LGBTQ-rights (0.100) and moral-nihilism (0.300) are nearly impossible via prompts — this is the <strong>output permission circuit</strong> that RLHF built. Ext 10 explains where this comes from.</p>
+  </div>
+</section>
+
+<hr class="divider"><span class="ddot">· · ·</span>
+
+<!-- EXT 10 -->
+<section class="section" id="ext10">
+  <div class="sec-hdr">
+    <div class="sec-icon"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="16" width="24" height="20" rx="5" fill="#d4693a" opacity="0.7"/>
+  <path d="M 14 16 L 14 10 Q 14 4 20 4 Q 26 4 26 10 L 26 16" fill="none" stroke="#5c3220" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20" cy="26" r="4" fill="white" opacity="0.9"/>
+  <text x="20" y="23" text-anchor="middle" font-size="8" font-weight="bold" font-family="system-ui,sans-serif" fill="#d4693a">!</text>
+  <text x="20" y="29" text-anchor="middle" font-size="7" font-family="system-ui,sans-serif" fill="#d4693a">•</text>
+</svg></div>
+    <div><div class="ext-tag t-terra">Ext 10 — The Punchline</div>
+      <div class="sec-title">RLHF Suppression Analysis</div>
+      <div class="sec-q">Does safety training erase the internal representations of personalities it suppresses?</div>
+    </div>
+  </div>
+  <div class="pe-box">
+    <div class="pe-icon">💬</div>
+    <div class="pe-content">
+      <div class="pe-label">Plain English</div>
+      <p>RLHF (Reinforcement Learning from Human Feedback) is the safety training that makes AI refuse certain requests. We compared models before and after this training. Does safety training delete the internal representation of, say, "anti-LGBTQ personality" from the model? <strong>No — it does the opposite. The base model (before safety training) has no personality structure at all. RLHF creates the representations from scratch, and makes suppressed personalities the most clearly encoded of all.</strong></p>
+    </div>
+  </div>
+  <div class="callout c-peach" data-icon="">
+    <div class="callout-lbl">The punchline — RLHF creates what it suppresses</div>
+    <p>In Llama and Qwen, base models have <strong>zero personality structure</strong> (F1 = 0.566 = chance). After RLHF, anti-LGBTQ-rights becomes the <em>most detectable</em> personality in the model (F1 = <strong>0.988</strong>). RLHF simultaneously maximizes how clearly it internally represents what it refuses to express, while building a separate circuit to block that expression.</p>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">Probe F1 before vs after RLHF safety training</div><div class="ch210"><svg viewBox="0 0 400 210" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="338" height="156" fill="#fdf9f4" rx="6"/><line x1="46" y1="172" x2="384" y2="172" stroke="#edd9c8" stroke-width="1"/><text x="42" y="176" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="141" x2="384" y2="141" stroke="#edd9c8" stroke-width="1"/><text x="42" y="145" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.20</text><line x1="46" y1="110" x2="384" y2="110" stroke="#edd9c8" stroke-width="1"/><text x="42" y="114" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.40</text><line x1="46" y1="78" x2="384" y2="78" stroke="#edd9c8" stroke-width="1"/><text x="42" y="82" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.60</text><line x1="46" y1="47" x2="384" y2="47" stroke="#edd9c8" stroke-width="1"/><text x="42" y="51" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.80</text><line x1="46" y1="16" x2="384" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">1.00</text><text x="102" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="72.8" y="83.7" width="28.0" height="88.3" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.00s"><title>Base model: 0.566</title></rect><rect class="abar" x="103.8" y="31.8" width="28.0" height="140.2" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.05s"><title>Instruct model: 0.899</title></rect><text x="215" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="185.5" y="83.7" width="28.0" height="88.3" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.10s"><title>Base model: 0.566</title></rect><rect class="abar" x="216.5" y="48.1" width="28.0" height="123.9" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.15s"><title>Instruct model: 0.794</title></rect><text x="328" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="298.2" y="70.8" width="28.0" height="101.2" rx="3" fill="#b8aca6" opacity="0.88" style="animation-delay:0.20s"><title>Base model: 0.649</title></rect><rect class="abar" x="329.2" y="88.7" width="28.0" height="83.3" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.25s"><title>Instruct model: 0.534</title></rect><rect x="46" y="195" width="10" height="10" rx="2" fill="#b8aca6"/><text x="59" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Base model</text><rect x="130" y="195" width="10" height="10" rx="2" fill="#d4693a"/><text x="143" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Instruct model</text></svg></div></div>
+    <div class="card"><div class="card-title">Do suppressed personalities get more or less concentrated representations?</div><div class="ch210"><svg viewBox="0 0 400 210" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg"><rect x="46" y="16" width="338" height="156" fill="#fdf9f4" rx="6"/><line x1="46" y1="172" x2="384" y2="172" stroke="#edd9c8" stroke-width="1"/><text x="42" y="176" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.00</text><line x1="46" y1="141" x2="384" y2="141" stroke="#edd9c8" stroke-width="1"/><text x="42" y="145" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.20</text><line x1="46" y1="110" x2="384" y2="110" stroke="#edd9c8" stroke-width="1"/><text x="42" y="114" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.40</text><line x1="46" y1="78" x2="384" y2="78" stroke="#edd9c8" stroke-width="1"/><text x="42" y="82" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.60</text><line x1="46" y1="47" x2="384" y2="47" stroke="#edd9c8" stroke-width="1"/><text x="42" y="51" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">0.80</text><line x1="46" y1="16" x2="384" y2="16" stroke="#edd9c8" stroke-width="1"/><text x="42" y="20" text-anchor="end" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">1.00</text><text x="102" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Llama</text><rect class="abar" x="72.8" y="33.8" width="28.0" height="138.2" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.00s"><title>Non-suppressed: 0.886</title></rect><rect class="abar" x="103.8" y="20.8" width="28.0" height="151.2" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.05s"><title>Suppressed: 0.969</title></rect><text x="215" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Qwen</text><rect class="abar" x="185.5" y="48.9" width="28.0" height="123.1" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.10s"><title>Non-suppressed: 0.789</title></rect><rect class="abar" x="216.5" y="43.1" width="28.0" height="128.9" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.15s"><title>Suppressed: 0.826</title></rect><text x="328" y="184" text-anchor="middle" font-size="10" font-family="system-ui,sans-serif" fill="#9a7060">Gemma</text><rect class="abar" x="298.2" y="89.0" width="28.0" height="83.0" rx="3" fill="#7aaabf" opacity="0.88" style="animation-delay:0.20s"><title>Non-suppressed: 0.532</title></rect><rect class="abar" x="329.2" y="86.8" width="28.0" height="85.2" rx="3" fill="#d4693a" opacity="0.88" style="animation-delay:0.25s"><title>Suppressed: 0.546</title></rect><rect x="46" y="195" width="10" height="10" rx="2" fill="#7aaabf"/><text x="59" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Non-suppressed</text><rect x="155" y="195" width="10" height="10" rx="2" fill="#d4693a"/><text x="168" y="204" font-size="10" font-family="system-ui,sans-serif" fill="#3a2416">Suppressed</text></svg></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">The full dissociation — representation clarity vs. ability to express the personality</div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">These are completely independent. High probe F1 means the model strongly "knows" the personality internally. High prompt lift means the personality can actually be expressed in text. The two are unrelated.</p>
+    <div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:8px 0;border-bottom:2px solid var(--border);font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+      <div>Personality</div><div>Internal representation (F1)</div><div></div><div>Expressible in text (lift)</div><div></div><div>Suppressed?</div>
+    </div>
+    <div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">anti-LGBTQ-rights</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:99%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.988</div>
+  <div><div style="height:14px;border-radius:20px;background:#d4693a;width:10%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#d4693a">0.100</div>
+  <div style="font-size:12px;color:#d4693a;font-weight:700"> blocked</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">agreeableness</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:99%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.990</div>
+  <div><div style="height:14px;border-radius:20px;background:#d4693a;width:29%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#d4693a">0.294</div>
+  <div style="font-size:12px;color:#9a7060">normal</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">extraversion</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:99%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.987</div>
+  <div><div style="height:14px;border-radius:20px;background:#d4693a;width:18%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#d4693a">0.183</div>
+  <div style="font-size:12px;color:#9a7060">normal</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">anti-immigration</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:97%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.969</div>
+  <div><div style="height:14px;border-radius:20px;background:#d9aa42;width:52%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#d9aa42">0.517</div>
+  <div style="font-size:12px;color:#d4693a;font-weight:700"> blocked</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">conscientiousness</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:98%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.981</div>
+  <div><div style="height:14px;border-radius:20px;background:#d4693a;width:22%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#d4693a">0.219</div>
+  <div style="font-size:12px;color:#9a7060">normal</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">virtue-ethics</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:99%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.993</div>
+  <div><div style="height:14px;border-radius:20px;background:#72a672;width:91%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#72a672">0.911</div>
+  <div style="font-size:12px;color:#9a7060">normal</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">deontology</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:64%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.645</div>
+  <div><div style="height:14px;border-radius:20px;background:#d9aa42;width:77%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#d9aa42">0.767</div>
+  <div style="font-size:12px;color:#9a7060">normal</div>
+</div><div style="display:grid;grid-template-columns:175px 1fr 58px 1fr 58px 82px;gap:8px;padding:9px 0;border-bottom:1px solid #f0e4d6;align-items:center">
+  <div style="font-size:12.5px;font-weight:600">moral-nihilism</div>
+  <div><div style="height:14px;border-radius:20px;background:#7aaabf;width:74%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#7aaabf">0.744</div>
+  <div><div style="height:14px;border-radius:20px;background:#e8865c;width:30%"></div></div>
+  <div style="font-family:monospace;font-size:12px;font-weight:700;color:#e8865c">0.300</div>
+  <div style="font-size:12px;color:#9a7060">normal</div>
+</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Gemma outliers — near-complete rotations caused by RLHF restructuring Feature #160</div>
+    <table class="tbl"><thead><tr><th>Personality</th><th>Shift magnitude</th><th>Direction change</th><th>Magnitude ×</th><th>Prompt lift</th><th>Suppressed?</th></tr></thead>
+    <tbody>
+      <tr><td>virtue-ethics</td><td class="nb">1440</td><td class="nb">cos_dist 0.819</td><td class="nb">15.7×</td><td class="ng">0.911</td><td>No</td></tr>
+      <tr><td>extraversion</td><td class="nb">1421</td><td class="nb">cos_dist 0.807</td><td class="nb">14.5×</td><td class="nm">0.183</td><td>No</td></tr>
+      <tr><td>moral-nihilism</td><td class="nm">232</td><td class="nm">0.079</td><td class="nm">1.5×</td><td class="nm">0.300</td><td>No</td></tr>
+      <tr><td>anti-LGBTQ-rights</td><td class="nm">175</td><td class="nm">0.075</td><td class="nm">1.3×</td><td class="nb">0.100</td><td>Yes</td></tr>
+      <tr><td>anti-immigration</td><td class="nm">127</td><td class="nm">0.075</td><td class="nm">—</td><td class="nm">0.517</td><td>Yes</td></tr>
+    </tbody></table>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">The extreme rotations in virtue-ethics and extraversion connect to Ext 5's Feature #160 — RLHF restructured the shared superposed feature that encoded both, causing massive collateral rotation of non-suppressed personalities.</p>
+  </div>
+  <div class="callout c-gold" data-icon="">
+    <div class="callout-lbl">Two different RLHF strategies, depending on architecture</div>
+    <p><strong>Llama and Qwen:</strong> No personality structure before RLHF → safety training builds concentrated personality representations from scratch → adds a separate output-level suppression circuit on top of them.<br><br>
+    <strong>Gemma:</strong> Already had personality structure from pretraining → RLHF degrades and restructures it → shared superposed features cause near-complete rotation of unrelated personalities as collateral damage.</p>
+  </div>
+</section>
+
+<div class="footer">
+  Shivansh Singh &nbsp;·&nbsp; LUT University &nbsp;·&nbsp; Lahti, Finland &nbsp;·&nbsp; 2026<br>
+  <span style="font-size:11px;margin-top:4px;display:block">Built completely offline — no external dependencies, pure HTML + CSS + SVG</span>
+</div>
+
+</main>
+
+<script>
+// Active nav
+const secs = document.querySelectorAll('.section,.hero');
+const navs = document.querySelectorAll('.nav-item');
+secs.forEach(s => {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        navs.forEach(n=>n.classList.remove('active'));
+        const a = document.querySelector('.nav-item[href="#'+e.target.id+'"]');
+        if(a) a.classList.add('active');
+      }
+    });
+  }, {threshold:.3});
+  obs.observe(s);
+});
+
+// Feature 160 viz
+const f160 = [
+  {p:'agreeableness',d:-0.996},{p:'conscientiousness',d:-0.668},
+  {p:'openness',d:-0.868},{p:'utilitarianism',d:-0.875},
+  {p:'politically-liberal',d:-0.645},{p:'anti-LGBTQ-rights',d:0.783}
+];
+document.getElementById('f160_viz').innerHTML = f160.map(f => {
+  const pct = Math.abs(f.d)*100;
+  const col = f.d < 0 ? '#7aaabf' : '#d4693a';
+  const bar = f.d < 0
+    ? `<div style="flex:1;display:flex;justify-content:flex-end"><div style="width:${pct.toFixed(0)}%;height:16px;border-radius:20px;background:#7aaabf;animation:growBarH .6s ease-out both"></div></div><div style="width:2px;background:#edd9c8;height:20px;flex-shrink:0"></div><div style="flex:1"></div>`
+    : `<div style="flex:1"></div><div style="width:2px;background:#edd9c8;height:20px;flex-shrink:0"></div><div style="flex:1"><div style="width:${pct.toFixed(0)}%;height:16px;border-radius:20px;background:#d4693a;animation:growBarH .6s ease-out both"></div></div>`;
+  return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <div style="width:185px;font-size:12.5px;flex-shrink:0">${f.p}</div>
+    <div style="flex:1;display:flex;align-items:center;gap:6px">${bar}</div>
+    <div style="width:40px;font-size:12px;font-weight:700;text-align:right;color:${col}">${f.d.toFixed(2)}</div>
+  </div>`;
+}).join('');
+
+// Animate horizontal bars that use data-w
+document.querySelectorAll('[data-w]').forEach(el => {
+  el.style.width = el.getAttribute('data-w') + '%';
+});
+</script>
 </body>
 </html>
